@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=edcf112a-5bc1-4c43-973f-1d9783cd50b2
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BESORA · בשורה מהיקום</title>
+<meta name="description" content="כל יום, משפט אחד שמחזיר אותך לעצמך. הורוסקופ יומי בעברית, בלי נבואות ובלי הבטחות.">
+<meta name="theme-color" content="#2E1450">
+<style>
+/* BESORA landing page. Same palette, type and manners as the app. The one bold thing is the sky: a real 3D scene
+   (see "the sky in 3D" in the script) whose camera moves as the page scrolls. Everything else stays quiet. */
+:root{
+  color-scheme:dark;
+  --plum:#2E1450;--wine:#4A102E;--deep:#2A0A24;--panel:#3E0F26;--panel-hi:#5C173A;
+  --gold:#C9A227;--gold-hi:#E9C46A;--cream:#FFF7EF;--mist:#D9BFCB;--lilac:#B7A6FF;--ink:#2A0A24;
+  --line:rgba(255,247,239,.14);
+  --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,"Arial Hebrew",Arial,sans-serif;
+  --latin:Georgia,"Times New Roman",serif;
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --r:16px;--r-in:12px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;min-height:100%;
+  background:var(--plum);
+  color:var(--cream);font-family:var(--body);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+button,input{font:inherit;color:inherit}
+h1,h2,h3,p,ul{margin:0}
+ul{padding:0;list-style:none}
+h1,h2{text-wrap:balance}
+:focus{outline:none}
+:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px;border-radius:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ltr{unicode-bidi:isolate;direction:ltr}
+
+/* the sky stays put behind the page */
+.sky{position:fixed;inset:0;overflow:hidden;pointer-events:none;background:linear-gradient(180deg,var(--plum) 0%,var(--wine) 52%,var(--deep) 100%)}
+.sky::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 10%,rgba(233,196,106,.22),transparent 46%),radial-gradient(circle at 88% 92%,rgba(46,20,80,.55),transparent 48%)}
+.sky::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,transparent 18%,rgba(46,20,80,.22) 68%,rgba(46,20,80,.52) 100%)}
+.sky canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+@keyframes rise{from{opacity:0;transform:perspective(900px) translate3d(0,8px,-70px)}to{opacity:1;transform:perspective(900px) translate3d(0,0,0)}}
+@keyframes reveal{from{opacity:0;filter:blur(8px);transform:perspective(700px) translate3d(0,6px,-160px)}to{opacity:1;filter:blur(0);transform:perspective(700px) translate3d(0,0,0)}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+.page{position:relative}
+.wrap{width:100%;max-width:1040px;margin:0 auto;padding-inline:20px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+.mark{font-family:var(--latin);font-weight:500;font-size:12px;letter-spacing:.30em;color:var(--gold-hi)}
+section{padding-block:clamp(72px,12vh,128px);text-align:center}
+
+/* type, as in the app */
+.eyebrow{font-size:13px;letter-spacing:.2em;color:var(--mist)}
+.h-screen{font-weight:700;font-size:clamp(2rem,6vw,3rem);line-height:1.05;letter-spacing:-.01em}
+.lede{font-size:16px;color:var(--mist);max-width:340px;margin-inline:auto}
+.big-g{font-size:34px;line-height:1;color:var(--gold-hi)}
+.sign-name{font-weight:700;font-size:clamp(2.8rem,11vw,4rem);line-height:.95;letter-spacing:-.015em}
+.spark{font-size:12px;color:var(--gold-hi)}
+.daily{transform-origin:50% 0;font-weight:500;font-size:clamp(1.45rem,5vw,1.85rem);line-height:1.45;max-width:320px;margin-inline:auto;text-wrap:balance}
+.cap{font-size:13px;letter-spacing:.16em;color:var(--mist)}
+.note{font-size:13px;color:var(--mist)}
+.stack{display:flex;flex-direction:column;gap:12px;align-items:center}
+
+/* buttons with a real edge */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;width:100%;max-width:440px;border-radius:999px;background:var(--gold);color:var(--wine);font-weight:700;font-size:17px;padding:12px 22px;text-decoration:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -2px 0 rgba(74,16,46,.18),0 3px 0 #8F7216,0 14px 22px -10px rgba(10,2,10,.7);
+  transition:transform .16s var(--ease-out),box-shadow .16s var(--ease-out),background-color .2s ease}
+.btn:active{transform:translateY(2px) scale(.985);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(74,16,46,.18),0 1px 0 #8F7216,0 6px 12px -8px rgba(10,2,10,.7)}
+.btn.small{width:auto;min-height:44px;font-size:15px;padding:8px 20px}
+@media (hover:hover) and (pointer:fine){.btn:hover{background:var(--gold-hi)} .opt:hover .face{background:var(--panel-hi)} .foot a:hover{color:var(--cream)}}
+
+/* hero */
+.hero{min-height:100vh;min-height:100svh;padding-block:0 28px;display:flex;flex-direction:column}
+.hero .mid{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px;padding-block:24px}
+.hero .mid > *{animation:rise .5s var(--ease-out) both}
+.hero .mid > *:nth-child(3){animation-delay:.12s}
+.hero .mid > *:nth-child(4){animation-delay:.18s}
+.hero .mid > *:nth-child(5){animation-delay:.24s}
+.hero .tilt{will-change:transform}
+.hero h1{font-family:var(--latin);font-weight:700;font-size:clamp(3.9rem,18vw,8.5rem);line-height:.9;letter-spacing:.14em;margin-inline-end:-.14em;animation:reveal .8s var(--ease-out) .1s both;
+  text-shadow:0 1px 0 #E9C46A,0 2px 0 #D4AE4C,0 3px 0 #B8932F,0 4px 0 #96761F,0 5px 0 #6E5516,0 18px 30px rgba(20,4,16,.55)}
+.hero .tag{font-size:24px;font-weight:600;line-height:1.35}
+.hero .foot-cta{display:flex;flex-direction:column;align-items:center;gap:12px}
+
+/* today's line, inside the wheel like the app's home screen */
+.today{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;gap:clamp(20px,4vh,40px)}
+.today .comp{display:flex;flex-direction:column;align-items:center;gap:clamp(8px,2vh,18px);min-height:300px;justify-content:center}
+.opts{display:grid;gap:8px;border:0;padding:0;margin:0 auto;min-width:0;grid-template-columns:repeat(4,1fr);max-width:440px;width:100%}
+@media (min-width:760px){.opts{grid-template-columns:repeat(6,1fr);max-width:640px}}
+.opt{position:relative;display:block}
+.opt input{position:absolute;inset:0;opacity:0;margin:0;width:100%;height:100%;cursor:pointer}
+.face{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;border-radius:var(--r-in);background:rgba(62,15,38,.92);padding:8px 4px;font-weight:600;font-size:14px;transition:background-color .2s ease,color .2s ease,transform .16s var(--ease-out),box-shadow .2s ease}
+.face .g{font-size:18px;line-height:1.1}
+.opt input:checked + .face{background:var(--gold);color:var(--wine);font-weight:700;transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.36),0 3px 0 #8F7216,0 12px 18px -10px rgba(10,2,10,.7)}
+.opt input:active + .face{transform:scale(.97)}
+.opt input:focus-visible + .face{outline:3px solid var(--gold-hi);outline-offset:3px}
+
+/* what's inside: a phone in 3D beside the list */
+.inside .cols{display:grid;gap:48px;align-items:center;margin-top:48px}
+@media (min-width:820px){.inside .cols{grid-template-columns:1fr 1fr;gap:24px} .inside ul{text-align:start}}
+.inside li + li{margin-top:28px}
+.inside h3{font-size:20px;font-weight:700;margin-bottom:4px}
+.inside li p{color:var(--mist);font-size:16px;max-width:380px;margin-inline:auto;text-wrap:balance}
+@media (min-width:820px){.inside li p{margin-inline:0}}
+.stage{perspective:1300px;display:flex;justify-content:center;padding-block:12px}
+.phone{position:relative;width:252px;height:520px;border-radius:40px;padding:12px;transform:rotateY(-22deg) rotateX(6deg);transform-style:preserve-3d;will-change:transform;
+  background:linear-gradient(180deg,#3a1a5e,#5a1638 52%,#2A0A24);
+  box-shadow:inset 0 0 0 1px rgba(233,196,106,.34),inset 0 1px 0 rgba(255,247,239,.2),
+    1px 0 0 #3b0d27,2px 0 0 #3b0d27,3px 0 0 #340b22,4px 0 0 #340b22,5px 0 0 #2c091d,6px 0 0 #2c091d,7px 0 0 #240718,8px 1px 0 #240718,
+    40px 50px 60px -20px rgba(10,2,10,.75)}
+.screen{height:100%;border-radius:29px;overflow:hidden;display:flex;flex-direction:column;text-align:center;background:linear-gradient(180deg,var(--plum) 0%,var(--wine) 52%,var(--deep) 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+.screen .p-top{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 0}
+.screen .mark{font-size:8px}
+.screen .pill{font-size:8px;font-weight:700;color:var(--ink);background:var(--lilac);border-radius:99px;padding:2px 8px}
+.screen .p-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:0 16px}
+.screen .p-note{font-size:8px;color:var(--mist)}
+.screen .p-hello{font-size:11px;font-weight:700}
+.screen .p-g{font-size:18px;color:var(--gold-hi);line-height:1;margin-top:10px}
+.screen .p-sign{font-size:30px;font-weight:700;line-height:1}
+.screen .p-line{font-size:13px;font-weight:500;line-height:1.45}
+.screen .p-cap{font-size:7px;letter-spacing:.16em;color:var(--mist)}
+.screen .p-seg{display:flex;gap:1px;margin:0 12px;background:rgba(255,247,239,.10);border-radius:8px;padding:2px;font-size:8px}
+.screen .p-seg span{flex:1;padding:5px 0}
+.screen .p-btn{margin:8px 12px 10px;border-radius:99px;background:var(--gold);color:var(--wine);font-size:10px;font-weight:700;padding:8px;box-shadow:0 2px 0 #8F7216}
+.screen .p-nav{display:flex;border-top:1px solid var(--line);background:rgba(36,8,30,.72);padding:6px 6px 10px;font-size:7px;color:var(--mist)}
+.screen .p-nav span{flex:1;display:flex;flex-direction:column;gap:1px}
+.screen .p-nav i{font-style:normal;font-size:11px;line-height:1}
+.screen .p-nav .on{color:var(--gold-hi);font-weight:700}
+
+/* the sky now: grouped list, as in the app */
+.group{max-width:440px;margin:28px auto 0;background:rgba(62,15,38,.5);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:var(--r);text-align:start;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,247,239,.06),0 16px 28px -20px rgba(10,2,10,.8)}
+.group > * + *{border-top:1px solid var(--line)}
+.cell{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:10px 16px}
+.cell .v{color:var(--mist);font-size:15px;text-align:end}
+.gf{max-width:440px;margin:6px auto 0;font-size:13px;color:var(--mist);text-align:start;padding:0 16px}
+@media (prefers-reduced-transparency:reduce){.group{background:var(--panel);-webkit-backdrop-filter:none;backdrop-filter:none}}
+
+.promise ul{margin-top:28px;display:flex;flex-direction:column;gap:14px}
+.promise li{font-size:clamp(1.15rem,3.4vw,1.4rem);font-weight:500;max-width:520px;margin-inline:auto;text-wrap:balance}
+
+.end{min-height:80vh;min-height:80svh;display:flex;flex-direction:column;justify-content:center}
+.foot{padding:28px 0 calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:center;font-size:13px;color:var(--mist);border-top:1px solid var(--line)}
+.foot a{color:var(--gold-hi);min-height:44px;display:inline-flex;align-items:center;padding:0 4px}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .hero .mid > *,.hero h1{animation:fade .2s ease both !important;animation-delay:0s !important}
+  .btn:active{transform:none}
+  .opt input:checked + .face,.opt input:active + .face{transform:none}
+  .phone{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"><canvas id="sky3d"></canvas></div>
+
+<div class="page">
+  <section class="hero wrap" data-cam="hero">
+    <header class="top"><span class="mark ltr" lang="en">BESORA</span><a class='btn small' href='/app'>כניסה</a></header>
+    <div class="mid">
+      <p class="eyebrow" aria-hidden="true">✦   ב ש ו ר ה   ✦</p>
+      <div class="tilt" id="tilt"><h1 class="ltr" lang="en">BESORA</h1></div>
+      <p class="spark" aria-hidden="true">✦</p>
+      <p class="tag">בשורה מהיקום</p>
+      <p class="lede">כל יום, משפט אחד שמחזיר אותך לעצמך. בלי נבואות ובלי הבטחות.</p>
+    </div>
+    <div class="foot-cta">
+      <a class='btn' href='/app'>✦   כניסה   ✦</a>
+      <p class="note">בלי הרשמה. בלי רעש. הכול נשמר רק במכשיר שלך.</p>
+    </div>
+  </section>
+
+  <section class="today wrap" data-cam="line" aria-labelledby="today-h">
+    <div class="stack"><h2 class="h-screen" id="today-h">הבשורה של היום</h2><p class="lede">בוחרים מזל ומקבלים את המשפט של היום, אותו משפט שמופיע באפליקציה.</p></div>
+    <div class="comp">
+      <p class="big-g" id="d-g" aria-hidden="true"></p>
+      <p class="sign-name" id="d-sign"></p>
+      <p class="spark" aria-hidden="true">✦</p>
+      <p class="daily" id="d-line" aria-live="polite"></p>
+      <p class="cap">בשורה מהיקום</p>
+    </div>
+    <fieldset class="opts" id="signs"><legend class="sr">בחירת מזל</legend></fieldset>
+  </section>
+
+  <section class="inside wrap" data-cam="read" aria-labelledby="inside-h">
+    <h2 class="h-screen" id="inside-h">מה יש בפנים</h2>
+    <div class="cols">
+      <div class="stage" aria-hidden="true">
+        <div class="phone" id="phone"><div class="screen">
+          <div class="p-top"><span class="mark ltr">BESORA</span><span class="pill">3 ימים ברצף</span></div>
+          <div class="p-mid">
+            <p class="p-note" id="p-date"></p><p class="p-hello" id="p-hello"></p>
+            <p class="p-g" id="p-g"></p><p class="p-sign" id="p-sign"></p>
+            <p class="spark" style="font-size:7px">✦</p>
+            <p class="p-line" id="p-line"></p><p class="p-cap">בשורה מהיקום</p>
+          </div>
+          <div class="p-seg"><span>שמח</span><span>עצוב</span><span>דואג</span><span>אקראי</span></div>
+          <div class="p-btn">שיתוף הבשורה</div>
+          <div class="p-nav"><span class="on"><i>✦</i>בית</span><span><i>☾</i>הורוסקופ</span><span><i>✧</i>אסטרולוג</span><span><i>☆</i>המזל שלי</span></div>
+        </div></div>
+      </div>
+      <ul>
+        <li><h3>בשורה יומית</h3><p>משפט אחד ליום, לפי המזל והנושאים שבחרת. אפשר לקבל אותו גם לפי מצב הרוח.</p></li>
+        <li><h3>הורוסקופ מהשמיים האמיתיים</h3><p>מיקום השמש, הירח וכוכבי הלכת מחושב במכשיר, לרגע זה.</p></li>
+        <li><h3>האסטרולוג</h3><p>צ'אט שאפשר לכתוב בו מה עובר עליך. לא אדם ולא ייעוץ מקצועי, והוא אומר את זה.</p></li>
+        <li><h3>שיתוף</h3><p>הבשורה הופכת לתמונה לסטורי או לפוסט, בלחיצה אחת.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="wrap" data-cam="read" aria-labelledby="sky-h">
+    <div class="stack"><h2 class="h-screen" id="sky-h">השמיים עכשיו</h2><p class="lede">הנקודה הזהובה על הגלגל היא השמש, והבהירה היא הירח. שתיהן במקום שבו הן נמצאות באמת.</p></div>
+    <div class="group" id="sky-list"></div>
+    <p class="gf">מחושב בדפדפן שלך ברגע זה, בדיוק של כמעלה.</p>
+  </section>
+
+  <section class="promise wrap" data-cam="read" aria-labelledby="promise-h">
+    <h2 class="h-screen" id="promise-h">בלי נבואות ובלי הבטחות</h2>
+    <ul>
+      <li>השראה ליום, לא תחזית. לוקחים מה שמתאים.</li>
+      <li>בלי הרשמה ובלי חשבון. הכול נשמר רק במכשיר שלך.</li>
+      <li>בלי פרסומות לגילאי 13 עד 17.</li>
+    </ul>
+  </section>
+
+  <section class="end wrap" data-cam="end" aria-labelledby="end-h">
+    <div class="stack" style="gap:22px">
+      <p class="spark" aria-hidden="true">✦   ✦   ✦</p>
+      <h2 class="h-screen" id="end-h">המשפט של היום כבר מחכה</h2>
+      <a class='btn' href='/app'>✦   כניסה   ✦</a>
+      <p class="note">בלי הרשמה. בלי רעש.</p>
+    </div>
+  </section>
+
+  <footer class="foot wrap"><span class="mark ltr" lang="en">BESORA</span><span>השראה בלבד, לא ייעוץ.</span><a href='/privacy'>מדיניות פרטיות</a></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* content and sky maths, the same as in the app */
+var SIGNS=[
+  {he:"טלה",g:"♈",s:"האומץ שלך"},{he:"שור",g:"♉",s:"היציבות שלך"},{he:"תאומים",g:"♊",s:"הסקרנות שלך"},
+  {he:"סרטן",g:"♋",s:"הלב הרגיש שלך"},{he:"אריה",g:"♌",s:"האור שלך"},{he:"בתולה",g:"♍",s:"העין המדויקת שלך"},
+  {he:"מאזניים",g:"♎",s:"חוש הצדק שלך"},{he:"עקרב",g:"♏",s:"העומק שלך"},{he:"קשת",g:"♐",s:"החלום שלך"},
+  {he:"גדי",g:"♑",s:"ההתמדה שלך"},{he:"דלי",g:"♒",s:"הראש המקורי שלך"},{he:"דגים",g:"♓",s:"הדמיון שלך"}
+];
+var DAILY=[
+  "היום מספיק דבר אחד. אחד טוב.","לא חייבים להבין הכול היום. רק את הצעד הבא.","{s} כבר כאן. אפשר לסמוך על זה.",
+  "הודעה אחת למישהו שחשוב לך. זה כל היום.","מותר להאט. העולם יחכה חמש דקות.","מה שלא הסתדר אתמול לא קובע את היום.",
+  "כוס מים, נשימה, ואז ההחלטה.","היום שווה לומר בקול את מה שנוח לשתוק.","פחות מסך, יותר שמיים. אפילו לדקה.",
+  "על {s} לא מבקשים אישור מאף אחד.","משהו קטן שנדחה כבר שבוע? היום הוא יוצא מהרשימה.","אפשר לומר לא, ולהישאר אנשים טובים.",
+  "היום לא משווים. רק ממשיכים.","שאלה טובה שווה יותר מתשובה מהירה.","מגיע לך רגע אחד שהוא רק שלך.",
+  "להתחיל גרוע עדיף על לא להתחיל.","שיחה אחת עם מי שמצחיק אותך. זה התכנון.","גם ביום שקט יש לך את {s}.",
+  "לא הכול דחוף. רוב הדברים פשוט רועשים.","תודה אחת, בקול. זה משנה את החדר.","היום בוחרים בקל. גם זה אומץ."
+];
+var PHASES=["מולד הירח","סהר עולה","רבע ראשון","ירח מתמלא","ירח מלא","ירח מתמעט","רבע אחרון","סהר יורד"];
+function dayIndex(d){ return Math.floor(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/86400000 + .5); }
+function dailyLine(i,day){ return DAILY[(day + i*5) % DAILY.length].replace("{s}",SIGNS[i].s); }
+function greeting(h){ return h<5?"לילה טוב":h<12?"בוקר טוב":h<17?"צהריים טובים":h<21?"ערב טוב":"לילה טוב"; }
+var RAD=Math.PI/180;
+function n360(x){ x%=360; return x<0?x+360:x; }
+function skyLon(date){
+  var d=date.getTime()/86400000 - 10957.5, R=RAD;
+  var Ms=n360(357.529+0.98560028*d), Ls=n360(280.459+0.98564736*d);
+  var sun=n360(Ls+1.915*Math.sin(Ms*R)+0.020*Math.sin(2*Ms*R));
+  var L=n360(218.316+13.176396*d), M=n360(134.963+13.064993*d), D=n360(297.850+12.190749*d), F=n360(93.272+13.229350*d);
+  var moon=n360(L+6.289*Math.sin(M*R)-1.274*Math.sin((M-2*D)*R)+0.658*Math.sin(2*D*R)+0.214*Math.sin(2*M*R)-0.186*Math.sin(Ms*R)-0.114*Math.sin(2*F*R));
+  return {sun:sun,moon:moon};
+}
+var $=function(id){ return document.getElementById(id); };
+var calm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var now=new Date(), today=dayIndex(now), lon=skyLon(now), ph=n360(lon.moon-lon.sun);
+var sunSign=Math.floor(lon.sun/30), moonSign=Math.floor(lon.moon/30);
+
+/* ---------- the sky in 3D ----------
+   One canvas and plain maths, no library, so the page stays a single offline file.
+   The zodiac wheel is a real ring in space: it leans away, the near side is larger and brighter, the far side fades.
+   Behind it is a sphere of stars. The camera sways a little, follows the mouse or the tilt of the phone,
+   and moves between poses as the page scrolls: close and steep in the hero, the app's home composition around today's line,
+   quieter behind the reading sections, close again at the end.
+   The sun and the moon sit on the inner ring at their real longitudes for this moment.
+   With reduced motion it draws a single still frame on each change. */
+var scene=(function(){
+  var cv=$("sky3d"), g=null;
+  try{ g=cv.getContext("2d"); }catch(e){}
+  if(!g) return {cam:function(){},scroll:function(){},face:function(){},mark:function(){}};
+  var TAU=Math.PI*2, GOLD="233,196,106", CREAM="255,247,239";
+  var GF='-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,"Arial Hebrew",Arial,sans-serif';
+  /* dim: sections made for reading keep the wheel quieter behind them */
+  var CAMS={hero:{tilt:60,zoom:1.5,cy:.5,dim:1},line:{tilt:26,zoom:1,cy:.45,dim:1},read:{tilt:44,zoom:1.3,cy:.5,dim:.3},end:{tilt:64,zoom:1.6,cy:.56,dim:.9}};
+  var W=0, H=0, R=0, F=0;
+  var cur={tilt:60,zoom:1.5,cy:.5,dim:1}, tgt=CAMS.hero, first=true;
+  var rot=0, rotT=0, scr=0, scrT=0, px=0, py=0, pxT=0, pyT=0, marked=-1, hero=$("tilt");
+  var t0=performance.now(), last=t0, raf=0, bodies=null, bodiesAt=0;
+  var P={x:0,y:0,s:1,d:0}, sT=0, cT=1, sY=0, cY=1, D=1, cxs=0, cys=0, Rz=1;
+  /* a fixed seed: the same sky on every visit */
+  var seed=148, stars=[], i;
+  function rnd(){ seed=(seed*16807)%2147483647; return seed/2147483647; }
+  for(i=0;i<1100;i++){
+    var u=rnd()*2-1, a=rnd()*TAU, q=Math.sqrt(1-u*u);
+    stars.push({x:q*Math.cos(a),y:u,z:q*Math.sin(a),m:rnd()*rnd(),p:rnd()*TAU,w:.5+rnd()*1.1,c:rnd()<.35});
+  }
+  function spin(now){ return calm?0:((now-t0)/220000*360)%360; }
+  /* ring space to the screen: lean about the horizontal axis (the bottom comes nearer), turn about the vertical one, then perspective */
+  function proj(x,y,z){
+    var y1=y*cT-z*sT, z1=y*sT+z*cT, x2=x*cY+z1*sY, z2=-x*sY+z1*cY, s=D/(D-z2);
+    P.x=cxs+x2*s; P.y=cys+y1*s; P.s=s; P.d=z2;
+  }
+  function fog(d){ var f=1+.8*d/Rz; return (f<.3?.3:f>1.7?1.7:f)*cur.dim; }
+  function ring(r,alpha,inc,turn){
+    var N=96, j, a, x, y, z, ox=0, oy=0, od=0, os=1, ci=Math.cos(inc), si=Math.sin(inc), ct=Math.cos(turn), sn=Math.sin(turn);
+    for(j=0;j<=N;j++){
+      a=j/N*TAU; x=r*Math.cos(a); y=r*Math.sin(a)*ci; z=r*Math.sin(a)*si;
+      proj(x*ct-y*sn,x*sn+y*ct,z);
+      if(j){
+        g.globalAlpha=Math.min(1,alpha*fog((P.d+od)/2)); g.lineWidth=Math.max(.6,(P.s+os)/2);
+        g.beginPath(); g.moveTo(ox,oy); g.lineTo(P.x,P.y); g.stroke();
+      }
+      ox=P.x; oy=P.y; od=P.d; os=P.s;
+    }
+  }
+  function glow(x,y,r,rgb,a){
+    var gr=g.createRadialGradient(x,y,0,x,y,r);
+    gr.addColorStop(0,"rgba("+rgb+","+a+")"); gr.addColorStop(1,"rgba("+rgb+",0)");
+    g.globalAlpha=1; g.fillStyle=gr; g.beginPath(); g.arc(x,y,r,0,TAU); g.fill();
+  }
+  function draw(now){
+    var t=(now-t0)/1000, dt=Math.min(.05,Math.max(0,(now-last)/1000)); last=now;
+    var snap=calm||first, k=snap?1:1-Math.exp(-dt*3), kr=snap?1:1-Math.exp(-dt*4.5), kp=snap?1:1-Math.exp(-dt*5);
+    first=false;
+    cur.tilt+=(tgt.tilt-cur.tilt)*k; cur.zoom+=(tgt.zoom-cur.zoom)*k; cur.cy+=(tgt.cy-cur.cy)*k; cur.dim+=(tgt.dim-cur.dim)*k;
+    rot+=(rotT-rot)*kr; scr+=(scrT-scr)*kr; px+=(pxT-px)*kp; py+=(pyT-py)*kp;
+    var camX=(calm?0:Math.sin(t*TAU/14)*2.5)+py*5, camY=(calm?0:Math.sin(t*TAU/19)*4)+px*7;
+    var tilt=(cur.tilt+camX)*RAD, yaw=camY*RAD, sp=spin(now)+rot+scr, j, a, s, x, y, z;
+    sT=Math.sin(tilt); cT=Math.cos(tilt); sY=Math.sin(yaw); cY=Math.cos(yaw);
+    Rz=R*cur.zoom; D=Rz*3.4; cxs=W/2; cys=H*cur.cy;
+    g.clearRect(0,0,W,H);
+
+    /* stars: directions on a sphere that drifts very slowly; only the camera's own movement turns them */
+    var dr=calm?0:t*TAU/900, sd=Math.sin(dr), cd=Math.cos(dr), sx=Math.sin(camX*RAD), cx=Math.cos(camX*RAD), col=null;
+    for(j=0;j<stars.length;j++){
+      s=stars[j];
+      x=s.x*cd+s.z*sd; z=-s.x*sd+s.z*cd;
+      y=s.y*cx-z*sx; z=s.y*sx+z*cx;
+      a=x*cY+z*sY; z=-x*sY+z*cY; x=a;
+      if(z>-.2) continue;
+      x=W/2+F*x/-z; y=H/2+F*y/-z;
+      if(x<-4||x>W+4||y<-4||y>H+4) continue;
+      if(col!==s.c){ col=s.c; g.fillStyle="rgb("+(col?GOLD:CREAM)+")"; }
+      g.globalAlpha=(.1+.55*s.m)*(calm?.85:.7+.3*Math.sin(t*s.w+s.p));
+      a=.45+s.m*1.15;
+      g.beginPath(); g.arc(x,y,a,0,TAU); g.fill();
+    }
+
+    /* the wheel: the two circles of the original, now in perspective */
+    g.strokeStyle="rgb("+GOLD+")";
+    ring(Rz+22*cur.zoom,.24,0,0);
+    ring(Rz-22*cur.zoom,.16,0,0);
+
+    /* sun and moon on the inner ring, where they really are right now */
+    if(!bodies||now-bodiesAt>600000){ bodies=skyLon(new Date()); bodiesAt=now; }
+    var rb=Rz-22*cur.zoom;
+    a=(bodies.moon-15+sp)*RAD; proj(rb*Math.sin(a),-rb*Math.cos(a),0);
+    glow(P.x,P.y,7*P.s,CREAM,(.3*fog(P.d)).toFixed(3));
+    g.globalAlpha=Math.min(1,.8*fog(P.d)); g.fillStyle="rgb("+CREAM+")"; g.beginPath(); g.arc(P.x,P.y,2.2*P.s,0,TAU); g.fill();
+    a=(bodies.sun-15+sp)*RAD; proj(rb*Math.sin(a),-rb*Math.cos(a),0);
+    glow(P.x,P.y,13*P.s,GOLD,(.45*fog(P.d)).toFixed(3));
+    g.globalAlpha=Math.min(1,.95*fog(P.d)); g.fillStyle="rgb("+GOLD+")"; g.beginPath(); g.arc(P.x,P.y,2.8*P.s,0,TAU); g.fill();
+
+    /* signs and sparks, always facing the viewer */
+    g.textAlign="center"; g.textBaseline="middle";
+    var fz=.6+.4*cur.zoom;
+    for(j=0;j<12;j++){
+      a=(j*30+15+sp)*RAD; proj(Rz*Math.sin(a),-Rz*Math.cos(a),0);
+      g.fillStyle="rgb("+GOLD+")";
+      g.globalAlpha=Math.min(1,(calm?.6:.55+.25*Math.sin(t*TAU/4.8+j%3*2.1))*fog(P.d));
+      g.font=(9*P.s*fz).toFixed(1)+"px "+GF; g.fillText("✦",P.x,P.y);
+      a=(j*30+sp)*RAD; proj(Rz*Math.sin(a),-Rz*Math.cos(a),0);
+      if(j===marked) glow(P.x,P.y,30*P.s*fz,GOLD,(.26*cur.dim).toFixed(3));
+      g.fillStyle="rgb("+GOLD+")";
+      g.globalAlpha=Math.min(1,(j===marked?.9:.5)*fog(P.d));
+      g.font=(24*P.s*fz*(j===marked?1.2:1)).toFixed(1)+"px "+GF; g.fillText(SIGNS[j].g,P.x,P.y);
+    }
+    g.globalAlpha=1;
+
+    /* the wordmark in the hero leans with the camera, and its edge shows the side you are looking from */
+    if(hero&&hero.isConnected){
+      var ox=-camY*.09, oy=1+camX*.08, sh="", cols=["#E9C46A","#D4AE4C","#B8932F","#96761F","#6E5516"];
+      for(j=0;j<cols.length;j++) sh+=(ox*(j+1)).toFixed(2)+"px "+(oy*(j+1)).toFixed(2)+"px 0 "+cols[j]+",";
+      hero.style.transform="perspective(700px) rotateX("+(-camX*1.6).toFixed(2)+"deg) rotateY("+(camY*1.6).toFixed(2)+"deg)";
+      hero.firstChild.style.textShadow=sh+"0 18px 30px rgba(20,4,16,.55)";
+    }
+  }
+  function frame(now){ raf=0; draw(now); if(!calm&&!document.hidden) raf=requestAnimationFrame(frame); }
+  function kick(){ if(!raf) raf=requestAnimationFrame(frame); }
+  function resize(){
+    var dpr=Math.min(2,window.devicePixelRatio||1);
+    W=window.innerWidth; H=window.innerHeight; R=Math.min(W*.44,Math.max(210,H*.3)); F=Math.max(W,H)*.6;
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); g.setTransform(dpr,0,0,dpr,0,0);
+    kick();
+  }
+  window.addEventListener("resize",resize);
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden){ last=performance.now(); kick(); } });
+  if(!calm){
+    window.addEventListener("pointermove",function(e){
+      if(e.pointerType!=="mouse") return;
+      pxT=(e.clientX/W-.5)*2; pyT=(e.clientY/H-.5)*2;
+    });
+    /* Phones that give the tilt without asking. iOS wants a permission prompt for it, and a horoscope should not ask for that. */
+    if(window.DeviceOrientationEvent&&typeof window.DeviceOrientationEvent.requestPermission!=="function"){
+      var b0=null, g0=null;
+      window.addEventListener("deviceorientation",function(e){
+        if(e.beta==null||e.gamma==null) return;
+        if(b0===null){ b0=e.beta; g0=e.gamma; }
+        pxT=Math.max(-1,Math.min(1,(e.gamma-g0)/25)); pyT=Math.max(-1,Math.min(1,(e.beta-b0)/25));
+      });
+    }
+  }
+  resize();
+  return {
+    cam:function(n){ tgt=CAMS[n]||CAMS.read; kick(); },
+    scroll:function(deg){ scrT=deg; kick(); },
+    /* bring a sign to the near side of the wheel, the short way round */
+    face:function(i){ var d=(((180-i*30-spin(performance.now())-scrT-rotT)%360)+540)%360-180; rotT+=d; kick(); },
+    mark:function(i){ marked=i; kick(); }
+  };
+})();
+
+/* ---------- page ---------- */
+var chosen=sunSign;
+function show(i,flip){
+  chosen=i;
+  var line=dailyLine(i,today), e=$("d-line");
+  $("d-g").textContent=SIGNS[i].g; $("d-sign").textContent=SIGNS[i].he; e.textContent=line;
+  $("p-g").textContent=SIGNS[i].g; $("p-sign").textContent=SIGNS[i].he; $("p-line").textContent=line;
+  /* the new line turns in like a flap on a departures board, hinged at its top edge */
+  if(flip&&e.animate) e.animate(calm?[{opacity:0},{opacity:1}]:[{opacity:0,filter:"blur(4px)",transform:"perspective(600px) rotateX(-72deg)"},{opacity:1,filter:"blur(0)",transform:"perspective(600px) rotateX(0deg)"}],{duration:calm?200:460,easing:"cubic-bezier(.23,1,.32,1)"});
+  scene.mark(i); scene.face(i);
+}
+var box=$("signs"), h="";
+SIGNS.forEach(function(s,i){ h+='<label class="opt"><input type="radio" name="sign" value="'+i+'"'+(i===chosen?" checked":"")+'><span class="face"><span class="g" aria-hidden="true">'+s.g+'</span><span>'+s.he+'</span></span></label>'; });
+box.insertAdjacentHTML("beforeend",h);
+box.addEventListener("change",function(e){ if(e.target.name==="sign") show(+e.target.value,true); });
+
+var date=""; try{ date=new Intl.DateTimeFormat("he-IL",{weekday:"long",day:"numeric",month:"long"}).format(now); }catch(e){}
+$("p-date").textContent=date+" · ירח ב"+SIGNS[moonSign].he;
+$("p-hello").textContent=greeting(now.getHours())+" ✨";
+$("sky-list").innerHTML=
+  '<div class="cell"><span>השמש</span><span class="v">במזל '+SIGNS[sunSign].he+' '+SIGNS[sunSign].g+'</span></div>'+
+  '<div class="cell"><span>הירח</span><span class="v">במזל '+SIGNS[moonSign].he+' '+SIGNS[moonSign].g+'</span></div>'+
+  '<div class="cell"><span>מופע הירח</span><span class="v">'+PHASES[Math.floor(n360(ph+22.5)/45)]+' · '+Math.round((1-Math.cos(ph*RAD))/2*100)+'% מואר</span></div>';
+show(chosen,false);
+
+/* scrolling moves the camera: each section names its pose, the wheel turns with the page, the phone turns as it passes */
+var secs=Array.prototype.slice.call(document.querySelectorAll("[data-cam]")), phone=$("phone"), tick=0;
+function onScroll(){
+  tick=0;
+  var vh=window.innerHeight, mid=vh/2, best=null, bd=1e9;
+  secs.forEach(function(s){ var r=s.getBoundingClientRect(), d=r.top<=mid&&r.bottom>=mid?0:Math.min(Math.abs(r.top-mid),Math.abs(r.bottom-mid)); if(d<bd){ bd=d; best=s; } });
+  if(best) scene.cam(best.getAttribute("data-cam"));
+  scene.scroll(calm?0:window.scrollY*.04);
+  if(!calm){
+    var r=phone.getBoundingClientRect(), t=Math.max(0,Math.min(1,(vh-r.top)/(vh+r.height)));
+    phone.style.transform="rotateY("+(-34+26*t).toFixed(2)+"deg) rotateX("+(9-7*t).toFixed(2)+"deg)";
+  }
+}
+window.addEventListener("scroll",function(){ if(!tick) tick=requestAnimationFrame(onScroll); },{passive:true});
+window.addEventListener("resize",onScroll);
+onScroll();
+})();
+</script>
+</body>
+</html>
